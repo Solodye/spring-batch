@@ -16,6 +16,8 @@
 
 package org.springframework.batch.repeat.support;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.batch.repeat.RepeatStatus;
 
 import java.util.Comparator;
@@ -34,6 +36,8 @@ import java.util.concurrent.Semaphore;
  */
 @Deprecated(since = "5.0", forRemoval = true)
 public class ResultHolderResultQueue implements ResultQueue<ResultHolder> {
+
+	protected Log logger = LogFactory.getLog(getClass());
 
 	// Accumulation of result objects as they finish.
 	private final BlockingQueue<ResultHolder> results;
@@ -92,11 +96,13 @@ public class ResultHolderResultQueue implements ResultQueue<ResultHolder> {
 		if (!isExpecting()) {
 			throw new IllegalArgumentException("Not expecting a result.  Call expect() before put().");
 		}
+		logger.info("Put this in queue %s".formatted(holder));
 		results.add(holder);
 		// Take from the waits queue now to allow another result to
 		// accumulate. But don't decrement the counter.
 		waits.release();
 		synchronized (lock) {
+			logger.info("Notify all");
 			lock.notifyAll();
 		}
 	}
@@ -129,6 +135,9 @@ public class ResultHolderResultQueue implements ResultQueue<ResultHolder> {
 		ResultHolder value;
 		synchronized (lock) {
 			value = results.take();
+			logger.info("Queue size before take: %s".formatted(results.size()));
+			logger.info("Take value: isContinuable = %s".formatted(isContinuable(value)));
+			logger.info("Queue size after take: %s".formatted(results.size()));
 			if (isContinuable(value)) {
 				// Decrement the counter only when the result is collected.
 				count--;
@@ -138,7 +147,13 @@ public class ResultHolderResultQueue implements ResultQueue<ResultHolder> {
 		results.put(value);
 		synchronized (lock) {
 			while (count > results.size()) {
+				logger.info("Enter in waiting, count = %s , queue.size() = %s".formatted(
+						count, results.size()
+				));
 				lock.wait();
+				logger.info("Wake up, count = %s , queue.size() = %s".formatted(
+						count, results.size()
+				));
 			}
 			value = results.take();
 			count--;

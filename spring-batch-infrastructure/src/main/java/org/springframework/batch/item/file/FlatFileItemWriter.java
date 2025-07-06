@@ -73,6 +73,7 @@ public class FlatFileItemWriter<T> extends AbstractFileItemWriter<T> {
 	public String doWrite(Chunk<? extends T> items) {
 		StringBuilder lines = new StringBuilder();
 		for (T item : items) {
+			logger.info("Writing % ".formatted(item));
 			lines.append(this.lineAggregator.aggregate(item)).append(this.lineSeparator);
 		}
 		return lines.toString();

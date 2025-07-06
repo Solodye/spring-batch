@@ -16,6 +16,7 @@
 
 package org.springframework.batch.repeat.support;
 
+import org.springframework.batch.item.database.support.SybasePagingQueryProvider;
 import org.springframework.batch.repeat.RepeatCallback;
 import org.springframework.batch.repeat.RepeatContext;
 import org.springframework.batch.repeat.RepeatException;
@@ -75,6 +76,7 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 	 */
 	@Deprecated(since = "5.0", forRemoval = true)
 	public void setThrottleLimit(int throttleLimit) {
+		logger.info("Set throttleLimit to %s".formatted(throttleLimit));
 		this.throttleLimit = throttleLimit;
 	}
 
@@ -122,7 +124,9 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 			/*
 			 * Start the task possibly concurrently / in the future.
 			 */
+			logger.info("Submitting jobs %s".formatted(runnable.callback));
 			taskExecutor.execute(runnable);
+			logger.info("Done submitting jobs %s".formatted(runnable.callback));
 
 			/*
 			 * Allow termination policy to update its state. This must happen immediately
@@ -155,6 +159,7 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 	 */
 	@Override
 	protected boolean waitForResults(RepeatInternalState state) {
+		logger.info("Entering waitForResults");
 
 		ResultQueue<ResultHolder> queue = ((ResultQueueInternalState) state).getResultQueue();
 
@@ -168,7 +173,9 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 			 */
 			ResultHolder future;
 			try {
+				logger.info("Running queue.take()");
 				future = queue.take();
+				logger.info("Get %s from queue.take()".formatted(future));
 			}
 			catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
@@ -176,11 +183,13 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 			}
 
 			if (future.getError() != null) {
+				logger.info("Future error %s".formatted(future.getError()));
 				state.getThrowables().add(future.getError());
 				result = false;
 			}
 			else {
 				RepeatStatus status = future.getResult();
+				logger.info("Result status".formatted(result));
 				result = result && canContinue(status);
 				executeAfterInterceptors(future.getContext(), status);
 			}
@@ -247,6 +256,7 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 		 */
 		@Override
 		public void run() {
+			logger.info("run method start");
 			boolean clearContext = false;
 			try {
 				if (RepeatSynchronizationManager.getContext() == null) {
@@ -259,10 +269,11 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 				}
 
 				result = callback.doInIteration(context);
-
+				logger.info("run method end try");
 			}
 			catch (Throwable e) {
 				error = e;
+				logger.warn("run method got error %s".formatted(e.getMessage()));
 			}
 			finally {
 
@@ -271,6 +282,7 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 				}
 
 				queue.put(this);
+				logger.info("run method end finally");
 
 			}
 		}
@@ -316,6 +328,10 @@ public class TaskExecutorRepeatTemplate extends RepeatTemplate {
 		 */
 		public ResultQueueInternalState(int throttleLimit) {
 			super();
+			System.out.println("Thread %s is setting throtleLimit %s to ResultHolderResultQueue".formatted(
+					Thread.currentThread().getName(),
+					throttleLimit
+			));
 			this.results = new ResultHolderResultQueue(throttleLimit);
 		}
 

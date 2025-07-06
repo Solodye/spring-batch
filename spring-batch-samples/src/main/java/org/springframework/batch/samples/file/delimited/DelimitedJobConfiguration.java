@@ -22,6 +22,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.jdbc.support.JdbcTransactionManager;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 @EnableBatchProcessing
@@ -58,8 +61,21 @@ public class DelimitedJobConfiguration {
 				.reader(itemReader)
 				.processor(new CustomerCreditIncreaseProcessor())
 				.writer(itemWriter)
+				.taskExecutor(threadPoolTaskExecutor())
+				.throttleLimit(8)
 				.build())
 			.build();
+	}
+
+	@Bean
+	public ThreadPoolTaskExecutor threadPoolTaskExecutor(){
+		ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+		threadPoolTaskExecutor.setCorePoolSize(2);
+		threadPoolTaskExecutor.setMaxPoolSize(3);
+		threadPoolTaskExecutor.setQueueCapacity(1);
+		threadPoolTaskExecutor.setDaemon(true);
+		threadPoolTaskExecutor.initialize();
+		return threadPoolTaskExecutor;
 	}
 
 }

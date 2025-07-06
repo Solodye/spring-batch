@@ -130,6 +130,7 @@ public class RepeatTemplate implements RepeatOperations {
 	 */
 	@Override
 	public RepeatStatus iterate(RepeatCallback callback) {
+		logger.info("Entering RepeatStatus.iterate");
 
 		RepeatContext outer = RepeatSynchronizationManager.getContext();
 
@@ -145,7 +146,7 @@ public class RepeatTemplate implements RepeatOperations {
 				RepeatSynchronizationManager.register(outer);
 			}
 		}
-
+		logger.info("Quit RepeatStatus.iterate");
 		return result;
 	}
 
@@ -157,6 +158,7 @@ public class RepeatTemplate implements RepeatOperations {
 	 *
 	 */
 	private RepeatStatus executeInternal(final RepeatCallback callback) {
+		logger.info("RepeatStatus.executeInternal");
 
 		// Reset the termination policy if there is one...
 		RepeatContext context = start();
@@ -219,12 +221,12 @@ public class RepeatTemplate implements RepeatOperations {
 				}
 
 			}
-
+			logger.info("result is %s".formatted(result));
 			result = result.and(waitForResults(state));
 			for (Throwable throwable : throwables) {
 				doHandle(throwable, context, deferred);
 			}
-
+			logger.info("Get result %s".formatted(result));
 			// Explicitly drop any references to internal state...
 			state = null;
 
@@ -285,17 +287,16 @@ public class RepeatTemplate implements RepeatOperations {
 				interceptor.onError(context, unwrappedThrowable);
 			}
 
-			if (logger.isDebugEnabled()) {
-				StringBuilder message = new StringBuilder("Handling exception: ")
-					.append(throwable.getClass().getName());
-				if (unwrappedThrowable != null) {
-					message.append(", caused by: ")
-						.append(unwrappedThrowable.getClass().getName())
-						.append(": ")
-						.append(unwrappedThrowable.getMessage());
-				}
-				logger.debug(message.toString());
+			StringBuilder message = new StringBuilder("Handling exception: ")
+				.append(throwable.getClass().getName());
+			if (unwrappedThrowable != null) {
+				message.append(", caused by: ")
+					.append(unwrappedThrowable.getClass().getName())
+					.append(": ")
+					.append(unwrappedThrowable.getMessage());
 			}
+			logger.info(message.toString());
+
 			exceptionHandler.handleException(context, unwrappedThrowable);
 
 		}
@@ -379,6 +380,7 @@ public class RepeatTemplate implements RepeatOperations {
 	 */
 	protected boolean waitForResults(RepeatInternalState state) {
 		// no-op by default
+		logger.info("Entering no-op waitForResults");
 		return true;
 	}
 

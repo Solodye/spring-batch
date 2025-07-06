@@ -185,7 +185,7 @@ public class FlatFileItemReader<T> extends AbstractItemCountingItemStreamItemRea
 		}
 
 		String line = readLine();
-
+		logger.info("Reading %s".formatted(line));
 		if (line == null) {
 			return null;
 		}
@@ -198,6 +198,7 @@ public class FlatFileItemReader<T> extends AbstractItemCountingItemStreamItemRea
 						+ resource.getDescription() + "], input=[" + line + "]", ex, line, lineCount);
 			}
 		}
+
 	}
 
 	/**
