@@ -134,13 +134,15 @@ public class ResultHolderResultQueue implements ResultQueue<ResultHolder> {
 		}
 		ResultHolder value;
 		synchronized (lock) {
-			value = results.take();
 			logger.info("Queue size before take: %s".formatted(results.size()));
+			value = results.take();
 			logger.info("Take value: isContinuable = %s".formatted(isContinuable(value)));
 			logger.info("Queue size after take: %s".formatted(results.size()));
 			if (isContinuable(value)) {
 				// Decrement the counter only when the result is collected.
+				logger.info("Before count -- : %s".formatted(count));
 				count--;
+				logger.info("After count -- : %s".formatted(count));
 				return value;
 			}
 		}
