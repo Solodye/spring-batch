@@ -74,6 +74,7 @@ public class DelimitedJobConfiguration {
 		threadPoolTaskExecutor.setMaxPoolSize(3);
 		threadPoolTaskExecutor.setQueueCapacity(1);
 		threadPoolTaskExecutor.setDaemon(true);
+		threadPoolTaskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 		threadPoolTaskExecutor.initialize();
 		return threadPoolTaskExecutor;
 	}
